@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:intl/intl.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -18,13 +19,14 @@ part 'main_screen_state.dart';
 
 class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
   final AWeatherRepository weatherRepository;
+  final SwiperController swiperController;
 
   WeatherResponse _weatherResponse;
 
   final DateFormat _formatterYMMMMEEEEd = DateFormat.yMMMMEEEEd();
   final DateFormat _formatterHms = DateFormat.Hms();
 
-  MainScreenBloc(this.weatherRepository) : super(null) {
+  MainScreenBloc(this.weatherRepository, this.swiperController) : super(null) {
     init();
   }
 
@@ -77,7 +79,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
       yield HourlyMainScreenState(
         getRegion(_weatherResponse.timezone),
         _parseCurrentWeatherModel(_weatherResponse.current),
-        event.index,
+        0,
         _getHourlyChartData(_weatherResponse.hourly),
         _parseHourlyWeatherModel(_weatherResponse.hourly),
       );
@@ -85,7 +87,25 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
       yield DailyMainScreenState(
         getRegion(_weatherResponse.timezone),
         _parseCurrentWeatherModel(_weatherResponse.current),
-        event.index,
+        0,
+        _getDailyChartData(_weatherResponse.daily),
+        _parseDailyWeatherModel(_weatherResponse.daily),
+      );
+    } else if (event is TapOnChartHourlyMainScreenEvent) {
+      swiperController.move(_weatherResponse.hourly.indexWhere((element) => element.dt == event.selectedDateTime));
+      yield HourlyMainScreenState(
+        getRegion(_weatherResponse.timezone),
+        _parseCurrentWeatherModel(_weatherResponse.current),
+        _weatherResponse.hourly.indexWhere((element) => element.dt == event.selectedDateTime),
+        _getHourlyChartData(_weatherResponse.hourly),
+        _parseHourlyWeatherModel(_weatherResponse.hourly),
+      );
+    } else if (event is TapOnChartDailyMainScreenEvent) {
+      swiperController.move(_weatherResponse.daily.indexWhere((element) => element.dt == event.selectedDateTime));
+      yield DailyMainScreenState(
+        getRegion(_weatherResponse.timezone),
+        _parseCurrentWeatherModel(_weatherResponse.current),
+        _weatherResponse.daily.indexWhere((element) => element.dt == event.selectedDateTime),
         _getDailyChartData(_weatherResponse.daily),
         _parseDailyWeatherModel(_weatherResponse.daily),
       );
@@ -176,5 +196,11 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
     });
 
     return list;
+  }
+
+  @override
+  Future<void> close() {
+    swiperController.dispose();
+    return super.close();
   }
 }

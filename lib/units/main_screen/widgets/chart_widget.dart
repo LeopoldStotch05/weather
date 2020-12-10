@@ -3,22 +3,41 @@ import 'package:charts_flutter/flutter.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-class PointsLineChart extends StatelessWidget {
+class PointsLineChart extends StatefulWidget {
   final List<LinearSales> seriesList;
   final bool animate;
+  final void Function(DateTime) onTapCallback;
 
-  PointsLineChart(this.seriesList, {this.animate});
+  PointsLineChart(this.seriesList, {this.animate, this.onTapCallback});
 
+  @override
+  _PointsLineChartState createState() => _PointsLineChartState();
+}
+
+class _PointsLineChartState extends State<PointsLineChart> {
   @override
   Widget build(BuildContext context) {
     return TimeSeriesChart(
-      _createSampleData(seriesList),
+      _createSampleData(widget.seriesList),
       defaultInteractions: true,
-      animate: animate,
+      animate: widget.animate,
+      selectionModels: [
+        SelectionModelConfig(
+          type: SelectionModelType.info,
+          changedListener: (data) => widget.onTapCallback(data.selectedDatum.first.datum.date),
+        )
+      ],
+      behaviors: [
+        LinePointHighlighter(
+          showHorizontalFollowLine: LinePointHighlighterFollowLineType.none,
+          showVerticalFollowLine: LinePointHighlighterFollowLineType.nearest,
+        ),
+        SelectNearest(eventTrigger: SelectionTrigger.tapAndDrag)
+      ],
       primaryMeasureAxis: NumericAxisSpec(
         viewport: NumericExtents(
-          seriesList.reduce((curr, next) => curr.temp > next.temp ? curr : next).temp + 1,
-          seriesList.reduce((curr, next) => curr.temp < next.temp ? curr : next).temp - 1,
+          widget.seriesList.reduce((curr, next) => curr.temp > next.temp ? curr : next).temp + 1,
+          widget.seriesList.reduce((curr, next) => curr.temp < next.temp ? curr : next).temp - 1,
         ),
         showAxisLine: true,
         renderSpec: NoneRenderSpec(),
@@ -28,8 +47,8 @@ class PointsLineChart extends StatelessWidget {
         showAxisLine: true,
         renderSpec: NoneRenderSpec(),
         viewport: DateTimeExtents(
-          start: seriesList.reduce((curr, next) => curr.date.isBefore(next.date) ? curr : next).date,
-          end: seriesList.reduce((curr, next) => curr.date.isAfter(next.date) ? curr : next).date,
+          start: widget.seriesList.reduce((curr, next) => curr.date.isBefore(next.date) ? curr : next).date,
+          end: widget.seriesList.reduce((curr, next) => curr.date.isAfter(next.date) ? curr : next).date,
         ),
       ),
     );

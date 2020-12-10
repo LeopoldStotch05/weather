@@ -20,11 +20,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final MainScreenBloc _mainScreenBloc = MainScreenBloc(GetIt.instance.get<AWeatherRepository>());
+  MainScreenBloc _mainScreenBloc;
   final SwiperController _swiperController = SwiperController();
 
   @override
   void initState() {
+    _mainScreenBloc = MainScreenBloc(GetIt.instance.get<AWeatherRepository>(), _swiperController);
     super.initState();
   }
 
@@ -54,9 +55,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   cubit: _mainScreenBloc,
                   builder: (BuildContext context, MainScreenState state) {
                     if (state is HourlyMainScreenState) {
-                      return PointsLineChart(state.linearSales, animate: true);
+                      return PointsLineChart(
+                        state.linearSales,
+                        animate: true,
+                        onTapCallback: (date) => _mainScreenBloc.add(TapOnChartHourlyMainScreenEvent(date)),
+                      );
                     } else if (state is DailyMainScreenState) {
-                      return PointsLineChart(state.linearSales, animate: true);
+                      return PointsLineChart(
+                        state.linearSales,
+                        animate: true,
+                        onTapCallback: (date) => _mainScreenBloc.add(TapOnChartDailyMainScreenEvent(date)),
+                      );
                     } else {
                       return Center(child: Text('No data'));
                     }
@@ -195,14 +204,14 @@ class _MyHomePageState extends State<MyHomePage> {
             return CupertinoButton(
               child: Text('Hourly'),
               onPressed: () {
-                _mainScreenBloc.add(LoadDailyMainScreenEvent(0));
+                _mainScreenBloc.add(LoadDailyMainScreenEvent());
               },
             );
           } else {
             return CupertinoButton(
               child: Text('Weekly'),
               onPressed: () {
-                _mainScreenBloc.add(LoadHourlyMainScreenEvent(0));
+                _mainScreenBloc.add(LoadHourlyMainScreenEvent());
               },
             );
           }
@@ -217,10 +226,13 @@ class _MyHomePageState extends State<MyHomePage> {
       child: BlocBuilder<MainScreenBloc, MainScreenState>(
         cubit: _mainScreenBloc,
         builder: (BuildContext context, MainScreenState state) {
+          if (state == null) {
+            return Center(child: Text('No data'));
+          }
+
           return Swiper(
             loop: false,
-            controller: _swiperController,
-            onIndexChanged: (value) => _swiperController.move(value),
+            controller: _mainScreenBloc.swiperController,
             itemBuilder: (BuildContext context, int index) {
               if (state is HourlyMainScreenState) {
                 return _buildswiperContainer(_buildHourlyCard(state.hourlyWeatherModelList[index]));
@@ -230,7 +242,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 return Center(child: Text('No data'));
               }
             },
-            itemCount: 5,
+            //TODO:change to method
+            itemCount:
+                state is HourlyMainScreenState ? state.hourlyWeatherModelList.length : (state as DailyMainScreenState).dailyWeatherModelList.length,
             pagination: SwiperPagination(builder: SwiperPagination.rect),
           );
         },
