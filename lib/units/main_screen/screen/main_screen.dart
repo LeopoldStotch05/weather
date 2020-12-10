@@ -54,23 +54,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   cubit: _mainScreenBloc,
                   builder: (BuildContext context, MainScreenState state) {
                     if (state is HourlyMainScreenState) {
-                      // state.hourlyWeatherModelList.asMap().
-
-                      return ChartWidget(
-                        minX: 12,
-                        //
-                        maxX: 124,
-                        minY: -30,
-                        maxY: 70,
-                      );
-                    } else if (state is DailyMainScreenState)
-                      return ChartWidget(
-                        minX: null,
-                        maxX: null,
-                        minY: null,
-                        maxY: null,
-                      );
-                    else {
+                      return PointsLineChart(state.linearSales, animate: true);
+                    } else if (state is DailyMainScreenState) {
+                      return PointsLineChart(state.linearSales, animate: true);
+                    } else {
                       return Center(child: Text('No data'));
                     }
                   },

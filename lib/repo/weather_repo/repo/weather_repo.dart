@@ -18,6 +18,8 @@ class WeatherRepository extends AWeatherRepository {
 
   @override
   Future<WeatherResponse> getWeatherData(WeatherRequest requestModel) async {
+    var shit = jsonDecode((await sendRequest(requestModel))?.data);
+    print(shit);
     return WeatherResponse.fromJson(jsonDecode((await sendRequest(requestModel))?.data));
   }
 

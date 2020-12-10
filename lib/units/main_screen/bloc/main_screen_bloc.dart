@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:weather/constants/constants.dart';
-import 'package:weather/units/main_screen/models/chart_model.dart';
+import 'package:weather/units/main_screen/widgets/chart_widget.dart';
 import '../../../tools/tools.dart';
 import '../models/current_weather_model.dart';
 import '../models/daily_weather_model.dart';
@@ -70,6 +70,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
         getRegion(event.weatherResponse.timezone),
         _parseCurrentWeatherModel(event.weatherResponse.current),
         0,
+        _getHourlyChartData(_weatherResponse.hourly),
         _parseHourlyWeatherModel(event.weatherResponse.hourly),
       );
     } else if (event is LoadHourlyMainScreenEvent) {
@@ -77,6 +78,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
         getRegion(_weatherResponse.timezone),
         _parseCurrentWeatherModel(_weatherResponse.current),
         event.index,
+        _getHourlyChartData(_weatherResponse.hourly),
         _parseHourlyWeatherModel(_weatherResponse.hourly),
       );
     } else if (event is LoadDailyMainScreenEvent) {
@@ -84,6 +86,7 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
         getRegion(_weatherResponse.timezone),
         _parseCurrentWeatherModel(_weatherResponse.current),
         event.index,
+        _getDailyChartData(_weatherResponse.daily),
         _parseDailyWeatherModel(_weatherResponse.daily),
       );
     }
@@ -136,8 +139,6 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
   List<DailyWeatherModel> _parseDailyWeatherModel(List<Daily> daily) {
     assert(daily != null);
 
-    daily.asMap().keys;
-
     List<DailyWeatherModel> list = [];
 
     daily.forEach((Daily element) {
@@ -152,6 +153,26 @@ class MainScreenBloc extends Bloc<MainScreenEvent, MainScreenState> {
         weatherDescription: element.weather.first.description,
         weatherIcon: 'http://openweathermap.org/img/wn/${element.weather.first.icon}@2x.png',
       ));
+    });
+
+    return list;
+  }
+
+  List<LinearSales> _getHourlyChartData(List<Hourly> daily) {
+    List<LinearSales> list = [];
+
+    daily.forEach((element) {
+      list.add(LinearSales(element.dt, element.temp));
+    });
+
+    return list;
+  }
+
+  List<LinearSales> _getDailyChartData(List<Daily> daily) {
+    List<LinearSales> list = [];
+
+    daily.forEach((element) {
+      list.add(LinearSales(element.dt, element.temp.day));
     });
 
     return list;
