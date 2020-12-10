@@ -28,6 +28,10 @@ class WeatherRepository extends AWeatherRepository {
 
   @override
   Future<WeatherResponse> getWeatherFromSharedPreferences(String key) async {
-    return WeatherResponse.fromJson(jsonDecode((await SharedPreferences.getInstance()).getString(key)));
+    String json = (await SharedPreferences.getInstance()).getString(key);
+    if (json == null) {
+      return null;
+    }
+    return WeatherResponse.fromJson(jsonDecode(json));
   }
 }
